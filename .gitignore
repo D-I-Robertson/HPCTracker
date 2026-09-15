@@ -1,3 +1,20 @@
+# ---------------------------------------------------------------------------
+# HPCTracker: personal data
+# The tracker saves each user's plan and photos next to server.py. That is
+# someone's own hobby record and must never be committed to this repository.
+# ---------------------------------------------------------------------------
+/data.json
+/data.json.bak
+/data.json.tmp
+/photos/
+*.tmp
+*.hpcbackup.json
+name-card-*.png
+
+# ---------------------------------------------------------------------------
+# Python (GitHub template)
+# ---------------------------------------------------------------------------
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

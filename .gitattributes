@@ -1,0 +1,7 @@
+# Store text files with LF in the repository; Git converts on checkout as usual.
+* text=auto
+
+# Windows batch files can misbehave with LF endings, so always check them out
+# as CRLF, whatever the cloning machine's Git settings are.
+*.cmd text eol=crlf
+*.bat text eol=crlf

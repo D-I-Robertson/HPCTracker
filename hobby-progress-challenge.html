@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hobby Progress Challenge 2026/27</title>
+<style>
+:root{
+  /* neutrals - the dark theme */
+  --bg:#101219; --panel:#181b24; --panel2:#20242f; --panel3:#272c39;
+  --line:#2f3545; --line2:#3d4457;
+  --text:#e9ebf2; --muted:#98a0b4; --faint:#6c7488;
+
+  /* the palette, hot pink to cyan */
+  --p1:#F72585; --p2:#B5179E; --p3:#7209B7; --p4:#560BAD; --p5:#480CA8;
+  --p6:#3A0CA3; --p7:#3F37C9; --p8:#4361EE; --p9:#4895EF; --p10:#4CC9F0;
+
+  /* flavour - decoration only, never the sole carrier of meaning */
+  --flavour:linear-gradient(90deg,var(--p1),var(--p2),var(--p3),var(--p4),var(--p5),
+                                  var(--p6),var(--p7),var(--p8),var(--p9),var(--p10));
+  /* the mid purples are too dark to read as letters, so text gets a lifted ramp */
+  --flavour-text:linear-gradient(90deg,#F959A2,#B67FDA 50%,var(--p10));
+
+  /* accent - what you can click, and where you are */
+  --accent:var(--p8);            /* fill; white text on it is 5.0:1 */
+  --accent-hover:var(--p7);      /* white text on it is 8.1:1 */
+  --accent-text:#7A8FF3;         /* --p8 lifted to read on dark panels, 4.7:1+ */
+
+  /* status - a cool-to-hot scale: done is cyan, urgent is hot pink.
+     The plain token is the palette colour as-is, for dots, borders and fills.
+     The -text token is the same hue lifted just enough to pass WCAG AA
+     (4.5:1) as small text on the lightest panel. Every status is also
+     spelled out in words, so colour is never the only signal. */
+  --ok:var(--p10);     --ok-text:var(--p10);   /* complete, bonus earned */
+  --info:var(--p3);    --info-text:#B67FDA;    /* in progress */
+  --warn:var(--p2);    --warn-text:#D374C5;    /* due soon */
+  --danger:var(--p1);  --danger-text:#F959A2;  /* overdue, missed, destructive */
+  --tag:var(--p6);                             /* filled requirement tags; white text 11.9:1 */
+
+  --radius:10px;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+a{color:var(--accent-text)}
+
+/* ---------- app frame ---------- */
+.topbar{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  padding:10px 20px; background:rgba(16,18,25,.92);
+  backdrop-filter:blur(8px);
+}
+.topbar::after{   /* flavour: the palette as a hairline under the bar */
+  content:""; position:absolute; left:0; right:0; bottom:0; height:2px;
+  background:var(--flavour); opacity:.9;
+}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:4px}
+.brand .mark{
+  font-size:17px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;
+  color:var(--p10); /* shown if gradient text is unsupported */
+  background:var(--flavour-text); -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.brand .sub{font-size:11px;color:var(--faint);white-space:nowrap}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap}
+nav.tabs button{
+  background:none;border:1px solid transparent;border-radius:7px;
+  padding:6px 12px;cursor:pointer;color:var(--muted);font-weight:500;
+}
+nav.tabs button:hover{color:var(--text);background:var(--panel2)}
+nav.tabs button[aria-current="true"]{
+  color:var(--accent-text);background:var(--panel2);
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.storage-badge{
+  display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);
+  border:1px solid var(--line);border-radius:20px;padding:4px 10px;cursor:pointer;background:var(--panel);
+}
+.storage-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.storage-badge.warn .dot{background:var(--warn)}
+.storage-badge.bad .dot{background:var(--danger)}
+main{padding:22px 20px 80px;max-width:1500px;margin:0 auto}
+.view{display:none}
+.view.active{display:block}
+
+/* ---------- generic bits ---------- */
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.btn{
+  background:var(--panel2);border:1px solid var(--line2);border-radius:8px;
+  padding:7px 13px;cursor:pointer;font-weight:500;white-space:nowrap;
+  transition:background .12s,border-color .12s;
+}
+.btn:hover:not(:disabled){background:var(--panel3);border-color:#4c5468}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{background:none;border-color:var(--line)}
+.btn.ghost:hover:not(:disabled){background:var(--panel2)}
+.btn.danger{color:var(--danger-text);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.btn.danger:hover:not(:disabled){background:color-mix(in srgb,var(--danger) 12%,transparent);
+  border-color:color-mix(in srgb,var(--danger) 60%,transparent)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:6px}
+
+label.field{display:block;margin-bottom:12px}
+label.field > span.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:5px;font-weight:600}
+input[type=text],input[type=number],select,textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;
+  padding:8px 10px;outline:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);
+}
+input[type=checkbox]{accent-color:var(--accent)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+select option:disabled{color:#5a6074}
+.hint{font-size:12px;color:var(--faint);margin-top:5px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+  padding:3px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+/* Status pills are outlined; requirement tags are filled, so the two never read alike. */
+.pill.ok    {color:var(--ok-text);    border-color:color-mix(in srgb,var(--ok) 45%,transparent);    background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.pill.info  {color:var(--info-text);  border-color:color-mix(in srgb,var(--info) 65%,transparent);  background:color-mix(in srgb,var(--info) 16%,transparent)}
+.pill.warn  {color:var(--warn-text);  border-color:color-mix(in srgb,var(--warn) 60%,transparent);  background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.pill.danger{color:var(--danger-text);border-color:color-mix(in srgb,var(--danger) 55%,transparent);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.pill.accent{color:var(--accent-text);border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.pill.tag   {color:#fff;border-color:var(--tag);background:var(--tag)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.section-head{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+.section-head h2{font-size:18px}
+.section-head .note{font-size:12px;color:var(--faint)}
+.empty{color:var(--faint);font-size:13px;padding:26px;text-align:center;border:1px dashed var(--line2);border-radius:var(--radius)}
+
+/* ---------- year board ---------- */
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.mcard{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 13px 13px;cursor:pointer;display:flex;flex-direction:column;gap:9px;
+  transition:border-color .12s,transform .12s,background .12s; text-align:left;font:inherit;color:inherit;
+  position:relative;overflow:hidden;
+}
+/* flavour: each month takes its step along the palette, pink in October to cyan in September */
+.mcard::before,.bcard::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--stripe,var(--line2));
+}
+.mcard:hover{border-color:var(--line2);background:var(--panel2);transform:translateY(-2px)}
+.mcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcard.is-now{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent),
+                                          0 6px 22px color-mix(in srgb,var(--accent) 18%,transparent)}
+.mcard.is-complete{border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
+.mcard.is-missed{border-color:color-mix(in srgb,var(--danger) 55%,transparent)}
+.mcard.is-past{opacity:.72}
+.mcard-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mcard-month{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.mcard-idx{font-size:10px;color:var(--faint);font-family:var(--mono)}
+.mcard-unit{font-size:13px;line-height:1.35;min-height:2.7em}
+.mcard-unit .none{color:var(--faint);font-style:italic}
+.mcard-unit .sys{display:block;font-size:11px;color:var(--faint);margin-top:2px}
+.mcard-thumbs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.thumbslot{
+  aspect-ratio:4/3;border-radius:7px;border:1px dashed var(--line2);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+}
+.thumbslot img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbslot .ph{font-size:10px;color:#565d70;text-transform:uppercase;letter-spacing:.08em}
+.thumbslot .cnt{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.72);border-radius:4px;
+  font-size:9px;padding:1px 4px;color:#cfd4e0}
+.thumbslot.has{border-style:solid;border-color:var(--line)}
+.mcard-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.deadline-line{font-size:11px;color:var(--faint);display:flex;align-items:center;gap:5px}
+.deadline-line.warn{color:var(--warn-text)}
+.deadline-line.danger{color:var(--danger-text)}
+.deadline-line.ok{color:var(--ok-text)}
+
+/* ---------- summary strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600}
+.stat .v{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:3px;line-height:1.1}
+.stat .v small{font-size:14px;color:var(--faint);font-weight:500}
+.stat .sub{font-size:11px;color:var(--faint);margin-top:3px}
+.bar{height:6px;border-radius:4px;background:var(--panel3);overflow:hidden;margin-top:9px}
+/* flavour: the whole palette spans the full track, so a bar warms from pink
+   towards cyan as it fills (the script sizes the gradient to the track) */
+.bar i{display:block;height:100%;background-image:var(--flavour);background-repeat:no-repeat;border-radius:4px}
+.bar i.ok{background:var(--ok)}
+
+/* ---------- modal ---------- */
+dialog{
+  border:1px solid var(--line2);border-radius:14px;background:var(--panel);color:var(--text);
+  padding:0;max-width:960px;width:calc(100vw - 40px);max-height:calc(100vh - 48px);
+}
+dialog::backdrop{background:rgba(5,6,10,.72)}
+.dlg-head{
+  position:sticky;top:0;border-bottom:1px solid var(--line);
+  background:var(--flavour) top / 100% 3px no-repeat, var(--panel);   /* flavour edge */
+  padding:15px 20px;display:flex;align-items:center;gap:12px;z-index:2;border-radius:14px 14px 0 0;
+}
+.dlg-head h3{font-size:17px}
+.dlg-body{padding:18px 20px;overflow:auto}
+.dlg-foot{
+  position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  padding:12px 20px;display:flex;gap:10px;align-items:center;border-radius:0 0 14px 14px;flex-wrap:wrap;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.fieldset{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:16px;background:var(--panel2)}
+.fieldset > h4{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent-text);margin-bottom:12px;font-weight:700}
+
+/* ---------- photo drop zones ---------- */
+.photo-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.photo-cols{grid-template-columns:1fr}}
+.dropzone{
+  border:1.5px dashed var(--line2);border-radius:var(--radius);padding:12px;background:var(--bg);
+  min-height:120px;transition:border-color .12s,background .12s;
+}
+.dropzone.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.dz-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.dz-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700}
+.dz-empty{font-size:12px;color:var(--faint);text-align:center;padding:18px 6px;line-height:1.7}
+.dz-empty kbd{background:var(--panel3);border:1px solid var(--line2);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:11px}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px}
+.shot{position:relative;border-radius:7px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:1}
+.shot img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.shot .tools{position:absolute;inset:auto 0 0 0;display:flex;gap:3px;padding:3px;
+  background:linear-gradient(transparent,rgba(0,0,0,.82));opacity:0;transition:opacity .12s}
+.shot:hover .tools,.shot:focus-within .tools{opacity:1}
+.shot .tools button{flex:1;background:rgba(30,34,44,.9);border:1px solid var(--line2);border-radius:4px;
+  font-size:10px;padding:3px;cursor:pointer;color:var(--text)}
+.shot .tools button:hover{background:var(--panel3)}
+.shot .cap{position:absolute;top:0;left:0;right:0;font-size:9px;padding:3px 5px;color:#dfe3ec;
+  background:linear-gradient(rgba(0,0,0,.72),transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- lightbox ---------- */
+#lightbox{border:none;background:none;max-width:100vw;width:100vw;max-height:100vh;height:100vh;padding:0}
+#lightbox::backdrop{background:rgba(3,4,7,.93)}
+.lb-wrap{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px}
+.lb-wrap img{max-width:100%;max-height:calc(100vh - 110px);object-fit:contain;border-radius:8px}
+.lb-bar{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- bonus grid ---------- */
+.bonus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:13px}
+.bcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:17px 14px 14px;
+  display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.bcard.claimed{border-color:color-mix(in srgb,var(--ok) 50%,transparent);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ok) 7%,transparent),transparent 60%),var(--panel)}
+.bcard.reserved{border-color:color-mix(in srgb,var(--accent) 65%,transparent)}
+.bcard.blocked{opacity:.5}
+.bcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.bcard h4{font-size:14px;line-height:1.3}
+.bcard .num{font-family:var(--mono);font-size:10px;color:var(--faint);flex:none;padding-top:2px}
+.bcard p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.55}
+.bcard .req{font-size:11px;color:var(--faint);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* ---------- tables ---------- */
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl th{
+  text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);
+  font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap
+}
+table.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.tbl tr:last-child td{border-bottom:none}
+table.tbl tbody tr:hover td{background:var(--panel2)}
+.tbl .dim{color:var(--faint)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+
+/* ---------- name card generator ---------- */
+.namecard{
+  background:#fff;color:#111;border-radius:10px;padding:26px 30px;text-align:center;
+  font-family:"Segoe UI",system-ui,sans-serif;
+}
+.namecard .nc-name{font-size:30px;font-weight:800;line-height:1.2;word-break:break-word}
+.namecard .nc-sys{font-size:15px;color:#555;margin-top:5px}
+.namecard .nc-date{font-size:21px;font-weight:600;margin-top:14px;font-variant-numeric:tabular-nums}
+.namecard .nc-tag{font-size:12px;color:#777;margin-top:9px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- toast ---------- */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:100;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--panel3);border:1px solid var(--line2);border-radius:9px;padding:10px 14px;
+  font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tin .18s ease-out;max-width:360px}
+.toast.ok{border-color:color-mix(in srgb,var(--ok) 55%,transparent);box-shadow:inset 3px 0 0 var(--ok),0 8px 24px rgba(0,0,0,.45)}
+.toast.bad{border-color:color-mix(in srgb,var(--danger) 55%,transparent);box-shadow:inset 3px 0 0 var(--danger),0 8px 24px rgba(0,0,0,.45)}
+.notice{
+  border:1px solid color-mix(in srgb,var(--warn) 60%,transparent);
+  background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--text);
+  border-radius:var(--radius);padding:12px 15px;margin-bottom:18px;font-size:13px;line-height:1.6;
+}
+.notice strong{color:var(--warn-text)}
+.notice code{font-family:var(--mono);font-size:12px;background:var(--panel3);padding:1px 5px;border-radius:4px}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+@media print{
+  .topbar,#toasts,.dlg-head,.dlg-foot{display:none!important}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">Hobby Progress Challenge</span>
+    <span class="sub" id="brandRange">Oct 2026 &ndash; Sep 2027</span>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-view="board" aria-current="true">Year Board</button>
+    <button data-view="bonuses">Bonuses</button>
+    <button data-view="backlog">Backlog</button>
+    <button data-view="stats">Stats</button>
+    <button data-view="data">Data</button>
+  </nav>
+  <div class="topbar-right">
+    <button class="storage-badge" id="storageBadge" title="Where your data is being kept">
+      <span class="dot"></span><span id="storageLabel">starting&hellip;</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ YEAR BOARD ============ -->
+  <section class="view active" id="view-board">
+    <div class="notice" id="storageNotice" hidden></div>
+    <div class="strip" id="boardStrip"></div>
+    <div class="section-head">
+      <h2>The Year</h2>
+      <span class="note">Click any month to plan it, add photos and notes.</span>
+      <span class="spacer"></span>
+      <button class="btn sm ghost" id="jumpNow">Go to current month</button>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- ============ BONUSES ============ -->
+  <section class="view" id="view-bonuses">
+    <div class="section-head">
+      <h2>Bonus Entries</h2>
+      <span class="note">One bonus per month &middot; each category once &middot; six maximum</span>
+      <span class="spacer"></span>
+      <span class="pill accent" id="bonusCounter">0 / 6 claimed</span>
+    </div>
+    <div class="bonus-grid" id="bonusGrid"></div>
+  </section>
+
+  <!-- ============ BACKLOG ============ -->
+  <section class="view" id="view-backlog">
+    <div class="section-head">
+      <h2>Backlog</h2>
+      <span class="note">Unpainted units waiting for a month.</span>
+      <span class="spacer"></span>
+      <input type="text" id="backlogFilter" placeholder="Filter&hellip;" style="width:180px">
+      <button class="btn primary" id="addBacklog">Add unit</button>
+    </div>
+    <div id="backlogWrap"></div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section class="view" id="view-stats">
+    <div class="section-head"><h2>Progress</h2></div>
+    <div class="strip" id="statsStrip"></div>
+    <div class="card" style="padding:16px;margin-top:6px">
+      <h3 style="font-size:14px;margin-bottom:12px">Month by month</h3>
+      <div class="tbl-wrap" style="border:none;background:none"><div id="statsTable"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section class="view" id="view-data">
+    <div class="section-head"><h2>Data &amp; Backup</h2></div>
+    <div class="card" style="padding:18px;max-width:760px">
+      <h3 style="font-size:14px">Storage</h3>
+      <p class="hint" id="storageDetail" style="margin-bottom:16px"></p>
+
+      <h3 style="font-size:14px;margin-top:20px">Backup</h3>
+      <p class="hint">Everything &mdash; plans, notes and full-resolution photos &mdash; in one file you can copy anywhere.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnExport">Export backup file</button>
+        <button class="btn" id="btnImport">Import backup file</button>
+        <button class="btn" id="btnExportPhotos">Save all photos as images</button>
+        <button class="btn" id="btnOpenFolder" hidden>Open the tracker folder</button>
+      </div>
+
+      <h3 style="font-size:14px;margin-top:24px">Challenge window</h3>
+      <p class="hint">Defaults to the 2026/27 challenge (1 Oct 2026 &ndash; 30 Sep 2027). Change only if the organisers shift the dates.</p>
+      <div class="row" style="margin-top:10px">
+        <label class="field" style="margin:0"><span class="lbl">First month</span>
+          <input type="text" id="startMonth" placeholder="2026-10" style="width:130px"></label>
+        <button class="btn" id="btnSaveWindow">Update</button>
+      </div>
+
+      <h3 style="font-size:14px;margin-top:24px;color:var(--danger-text)">Danger zone</h3>
+      <div class="row" style="margin-top:10px">
+        <button class="btn danger" id="btnWipe">Erase all data</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="monthDlg"></dialog>
+<dialog id="lightbox"></dialog>
+<dialog id="genericDlg"></dialog>
+<div id="toasts"></div>
+<input type="file" id="filePicker" accept="image/*" multiple hidden>
+<input type="file" id="backupPicker" accept="application/json,.json,.hpcbackup" hidden>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   The 2027 Hobby Progress Challenge (the 2026/27 edition)
+   Runs 1 Oct 2026 - 30 Sep 2027. Rules:
+   theindependentcharacters.com/blog/the-2027-hobby-progress-challenge/
+
+   Start it with "Start Tracker.cmd" and everything is saved into this folder.
+   The only thing the page ever talks to is that local server on 127.0.0.1.
+
+   This file is deliberately self-contained and offline. It makes no internet
+   requests of any kind and talks to no third-party service.
+   ========================================================================== */
+
+const DEFAULT_START = "2026-10";   // first month of the challenge
+const MONTH_COUNT   = 12;
+const MAX_BONUSES   = 6;
+const TZ            = "America/Los_Angeles";  // all deadlines are Pacific
+
+/* ---------- the 14 bonus categories, in the order the rules list them ------ */
+const BONUSES = [
+  { id:"vehicle", n:1, name:"Vehicle, Behemoth, or Cavalry Type Unit",
+    desc:"A vehicle. Systems without vehicles can substitute a Behemoth-sized model or a full unit of cavalry.",
+    shots:"unit" },
+  { id:"battleline", n:2, name:"Battleline Unit",
+    desc:"The basic line troops of whatever army you are painting.",
+    shots:"unit" },
+  { id:"character", n:3, name:"Character",
+    desc:"A single HQ-level or named character model.",
+    shots:"unit" },
+  { id:"monstrous", n:4, name:"Monstrous Creature / Dreadnought",
+    desc:"A large singular threat - Greater Daemon, Carnifex, Dreadnought and the like.",
+    shots:"unit" },
+  { id:"titanic", n:5, name:"Titanic Month (Knight-sized)",
+    desc:"A Knight-sized model or an actual Titan. Not every army has access to this size of model.",
+    shots:"unit" },
+  { id:"flyer", n:6, name:"Flyer Unit",
+    desc:"Any aircraft classified as a flyer.",
+    shots:"unit" },
+  { id:"terrain", n:7, name:"Terrain Set",
+    desc:"A significant terrain piece, or a set of smaller pieces.",
+    shots:"unit" },
+  { id:"display", n:8, name:"Display Board",
+    desc:"A painted display board for tournaments, or a diorama base for home.",
+    shots:"unit" },
+  { id:"doubleup", n:9, name:"Double Up!",
+    desc:"Paint two units in a single month. The second unit does not need its photo in by the 10th.",
+    shots:"unit", extraUnits:1, needsBeforeAfter:true },
+  { id:"reset", n:10, name:"Reset the Mechanism",
+    desc:"Tidy the hobby desk. Before and after pictures of your workspace, not a model.",
+    shots:"workspace", needsBeforeAfter:true },
+  { id:"jgid", n:11, name:"Just Get It Done!",
+    desc:"Finish two units you had already started, each no more than 75% complete when you began.",
+    shots:"unit", extraUnits:1, needsBeforeAfter:true },
+  { id:"army", n:12, name:"You're in the Army Now!",
+    desc:"Paint enough units to field a fully playable 2000-point force. Warhammer 40,000, The Old World, Age of Sigmar or Horus Heresy only.",
+    shots:"unit" },
+  { id:"jam", n:13, name:"Hobby Jam",
+    desc:"Assemble or paint alongside at least one other person. Virtual counts - a screenshot of everyone holding models is the evidence.",
+    shots:"evidence" },
+  { id:"ebay", n:14, name:"Ebay Rescue",
+    desc:"Take an older painted model, strip it, modify it if you like, and repaint it to your current standard.",
+    shots:"unit", needsBeforeAfter:true },
+];
+const BONUS_BY_ID = Object.fromEntries(BONUSES.map(b => [b.id, b]));
+
+/* ---------- flavour ramp ---------------------------------------------------
+   The ten palette colours live in the stylesheet (--p1 .. --p10); this reads
+   them back so a position anywhere along the ramp can be coloured - month 1
+   of 12 is pure pink, month 12 pure cyan, everything between is blended. */
+const RAMP = Array.from({ length: 10 }, (_, i) =>
+  getComputedStyle(document.documentElement).getPropertyValue("--p" + (i + 1)).trim());
+
+function rampAt(t) {
+  const x = Math.min(1, Math.max(0, t)) * (RAMP.length - 1);
+  const i = Math.min(RAMP.length - 2, Math.floor(x));
+  const f = x - i;
+  const a = parseInt(RAMP[i].slice(1), 16), b = parseInt(RAMP[i + 1].slice(1), 16);
+  const ch = shift => {
+    const from = (a >> shift) & 255, to = (b >> shift) & 255;
+    return Math.round(from + (to - from) * f);
+  };
+  return "rgb(" + ch(16) + "," + ch(8) + "," + ch(0) + ")";
+}
+
+/* Stretch the gradient to the full track, not the filled part, so a bar at
+   25% shows only the pink end and a full one shows the whole palette. */
+function barStyle(pct) {
+  const w = Math.min(100, Math.max(0, pct));
+  return "width:" + w + "%;background-size:" + (w > 0 ? 10000 / w : 100) + "% 100%";
+}
+
+const STATUSES = [
+  { id:"planned",  label:"Planned",     cls:"" },
+  { id:"started",  label:"In progress", cls:"info" },
+  { id:"complete", label:"Complete",    cls:"ok" },
+  { id:"missed",   label:"Missed",      cls:"danger" },
+  { id:"skipped",  label:"Skipped",     cls:"" },
+];
+const STATUS_BY_ID = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+
+/* ==========================================================================
+   Small helpers
+   ========================================================================== */
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+
+function el(tag, attrs, ...kids) {
+  const node = document.createElement(tag);
+  for (const k in (attrs || {})) {
+    const v = attrs[k];
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === "dataset") Object.assign(node.dataset, v);
+    else node.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    node.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return node;
+}
+
+function toast(msg, kind) {
+  const t = el("div", { class: "toast " + (kind || ""), text: msg });
+  $("#toasts").append(t);
+  setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0";
+                     setTimeout(() => t.remove(), 320); }, kind === "bad" ? 6000 : 3200);
+}
+
+/* ---------- date + timezone ------------------------------------------------ */
+/* Deadlines are stated in Pacific time and the challenge crosses the PDT/PST
+   boundary twice, so offsets are derived from the zone rather than hardcoded. */
+function tzOffsetMs(date, tz) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+  const p = {};
+  for (const part of dtf.formatToParts(date)) p[part.type] = part.value;
+  const asIfUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  return asIfUTC - (Math.floor(date.getTime() / 1000) * 1000);
+}
+/* Wall-clock time in `tz` -> the real instant it refers to. */
+function zonedToInstant(y, m, d, hh, mm, ss, tz) {
+  const guess = Date.UTC(y, m - 1, d, hh, mm, ss);
+  let off = tzOffsetMs(new Date(guess), tz);
+  let ts  = guess - off;
+  const off2 = tzOffsetMs(new Date(ts), tz);
+  if (off2 !== off) ts = guess - off2;
+  return new Date(ts);
+}
+
+const MONTH_NAMES = ["January","February","March","April","May","June",
+                     "July","August","September","October","November","December"];
+const MONTH_ABBR  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const parseKey   = k => ({ y: +k.slice(0, 4), m: +k.slice(5, 7) });
+const makeKey    = (y, m) => y + "-" + String(m).padStart(2, "0");
+const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+function addMonths(key, n) {
+  const { y, m } = parseKey(key);
+  const total = y * 12 + (m - 1) + n;
+  return makeKey(Math.floor(total / 12), (total % 12) + 1);
+}
+const monthLabel     = k => { const { y, m } = parseKey(k); return MONTH_ABBR[m - 1] + " " + y; };
+const monthLabelLong = k => { const { y, m } = parseKey(k); return MONTH_NAMES[m - 1] + " " + y; };
+
+/* "Now" is overridable via ?today=YYYY-MM-DD purely so the deadline logic can
+   be exercised without waiting for the calendar. */
+function now() {
+  const forced = new URLSearchParams(location.search).get("today");
+  if (forced && /^\d{4}-\d{2}-\d{2}$/.test(forced)) {
+    return zonedToInstant(+forced.slice(0,4), +forced.slice(5,7), +forced.slice(8,10), 12, 0, 0, TZ);
+  }
+  return new Date();
+}
+/* Deadline 1: unpainted photo, due end of the 10th, Pacific. */
+const beforeDeadline = key => {
+  const { y, m } = parseKey(key);
+  return zonedToInstant(y, m, 10, 23, 59, 59, TZ);
+};
+/* Deadline 2: finished photo, due end of the last day of the month, Pacific. */
+const afterDeadline = key => {
+  const { y, m } = parseKey(key);
+  return zonedToInstant(y, m, daysInMonth(y, m), 23, 59, 59, TZ);
+};
+function fmtDate(d) {
+  return new Intl.DateTimeFormat("en-GB",
+    { timeZone: TZ, day: "numeric", month: "short" }).format(d);
+}
+/* Calendar days apart in Pacific, not 24-hour spans: a deadline at 23:59
+   tonight is "today", not "tomorrow". */
+function ptDayNumber(d) {
+  const p = new Intl.DateTimeFormat("en-CA",
+    { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  return Date.UTC(+p.slice(0, 4), +p.slice(5, 7) - 1, +p.slice(8, 10));
+}
+function daysBetween(a, b) { return Math.round((ptDayNumber(b) - ptDayNumber(a)) / 86400000); }
+function humanUntil(deadline, ref) {
+  const d = daysBetween(ref, deadline);
+  if (d < 0)  return Math.abs(d) + (Math.abs(d) === 1 ? " day ago" : " days ago");
+  if (d === 0) return "today";
+  if (d === 1) return "tomorrow";
+  return "in " + d + " days";
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function bytes(n) {
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+  return (n / 1048576).toFixed(1) + " MB";
+}
+
+/* ==========================================================================
+   Storage
+   --------------------------------------------------------------------------
+   The intended setup is "Start Tracker.cmd", which runs server.py from this
+   folder; the page then saves data.json and photos/ straight into the folder
+   it was served from. If the page is opened some other way (double-clicking
+   the .html), it falls back to whatever the browser will allow:
+
+     1. Website folder     - via server.py; automatic, real files next to the app
+     2. IndexedDB          - silent and automatic, but inside the browser
+     3. File System Access - you pick a folder; photos become real files on disk
+     4. Memory only        - nothing survives a reload; save a backup by hand
+
+   Every backend shares the same tiny interface, so nothing above this section
+   needs to know which one is live.
+   ========================================================================== */
+
+const DOC_KEY = "state";
+
+/* ---------- 1. Website folder (server.py) ---------------------------------- */
+const blobPath = name => name.split("/").map(encodeURIComponent).join("/");
+
+const ServerBackend = {
+  kind: "server", label: "Website folder", root: "",
+  async init() {
+    if (!/^https?:$/.test(location.protocol)) throw new Error("page was not opened through Start Tracker");
+    const r = await fetch("/api/ping", { cache: "no-store" });
+    if (!r.ok) throw new Error("tracker server not running");
+    const info = await r.json().catch(() => null);
+    if (!info || info.app !== "hpc-tracker") throw new Error("tracker server not running");
+    this.root = info.root;
+    return { detail: "Saved automatically into the tracker's own folder: " + info.root +
+                     ". The plan is data.json; photos are in the photos subfolder." };
+  },
+  async _call(method, path, body, type) {
+    const r = await fetch("/api/" + path, {
+      method, body, cache: "no-store",
+      headers: type ? { "Content-Type": type } : undefined,
+    });
+    if (!r.ok && r.status !== 404) throw new Error("server said " + r.status);
+    return r;
+  },
+  async loadDoc() {
+    const r = await this._call("GET", "doc");
+    return r.ok ? r.json() : null;
+  },
+  async saveDoc(doc) { await this._call("PUT", "doc", JSON.stringify(doc, null, 2), "application/json"); },
+  async putBlob(name, b) { await this._call("PUT", "blob/" + blobPath(name), b, b.type || "application/octet-stream"); },
+  async getBlob(name) {
+    const r = await this._call("GET", "blob/" + blobPath(name));
+    return r.ok ? r.blob() : null;
+  },
+  async delBlob(name) { await this._call("DELETE", "blob/" + blobPath(name)); },
+  // Photos are ordinary files the server can hand out, so no in-memory copies.
+  urlFor(name) { return "/api/blob/" + blobPath(name); },
+  async listBlobs() { return (await this._call("GET", "blobs")).json(); },
+  async openFolder() { await this._call("POST", "open-folder"); },
+  // Last-chance save while the tab is closing; the browser caps these small.
+  flushOnExit(doc) {
+    try {
+      fetch("/api/doc", { method: "PUT", body: JSON.stringify(doc), keepalive: true,
+                          headers: { "Content-Type": "application/json" } });
+    } catch (e) { /* the regular save will have caught nearly everything */ }
+  },
+};
+
+/* ---------- 2. IndexedDB --------------------------------------------------- */
+const IdbBackend = {
+  kind: "idb", label: "IndexedDB", db: null,
+  async init() {
+    if (typeof indexedDB === "undefined") throw new Error("IndexedDB not present");
+    this.db = await new Promise((res, rej) => {
+      let req;
+      try { req = indexedDB.open("hpc-2027", 1); }
+      catch (e) { return rej(e); }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("doc"))   db.createObjectStore("doc");
+        if (!db.objectStoreNames.contains("blobs")) db.createObjectStore("blobs");
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error || new Error("open failed"));
+      req.onblocked = () => rej(new Error("blocked by another tab"));
+      setTimeout(() => rej(new Error("timed out")), 4000);
+    });
+    // Prove it can actually round-trip a Blob before we commit to it.
+    await this._put("blobs", "__probe", new Blob([new Uint8Array([1])]));
+    const back = await this._get("blobs", "__probe");
+    if (!(back instanceof Blob)) throw new Error("blob round-trip failed");
+    await this._del("blobs", "__probe");
+    return { detail: "Saved automatically in this browser's local database on this PC." };
+  },
+  _tx(store, mode) { return this.db.transaction(store, mode).objectStore(store); },
+  _put(store, key, val) {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(store, "readwrite");
+      tx.objectStore(store).put(val, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  _get(store, key) {
+    return new Promise((res, rej) => {
+      const r = this._tx(store, "readonly").get(key);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  },
+  _del(store, key) {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(store, "readwrite");
+      tx.objectStore(store).delete(key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  loadDoc()        { return this._get("doc", DOC_KEY); },
+  saveDoc(doc)     { return this._put("doc", DOC_KEY, doc); },
+  putBlob(name, b) { return this._put("blobs", name, b); },
+  getBlob(name)    { return this._get("blobs", name); },
+  delBlob(name)    { return this._del("blobs", name); },
+};
+
+/* ---------- 3. File System Access ------------------------------------------ */
+const FsaBackend = {
+  kind: "fsa", label: "Folder on disk", root: null, photos: null,
+  async init() {
+    if (typeof window.showDirectoryPicker !== "function")
+      throw new Error("File System Access not available");
+    // Needs a user gesture, so the app asks for it explicitly at startup.
+    const ok = await confirmDialog(
+      "Choose a folder for your data",
+      "This browser will not let the page save on its own, so the tracker will keep your plan " +
+      "and photos in a folder you choose - as ordinary files you can open, copy and back up.\n\n" +
+      "Pick an empty folder, for example Documents\\Hobby Progress Challenge. " +
+      "You will be asked for it once each time you open the app.",
+      "Choose folder");
+    if (!ok) throw new Error("folder not chosen");
+    this.root   = await window.showDirectoryPicker({ id: "hpc2027", mode: "readwrite" });
+    this.photos = await this.root.getDirectoryHandle("photos", { create: true });
+    return { detail: "Stored as real files in the folder you picked. Photos live in its photos subfolder." };
+  },
+  async _readFile(dir, name) {
+    try { const h = await dir.getFileHandle(name); return await h.getFile(); }
+    catch (e) { if (e.name === "NotFoundError") return null; throw e; }
+  },
+  async _writeFile(dir, name, data) {
+    const h = await dir.getFileHandle(name, { create: true });
+    const w = await h.createWritable();
+    await w.write(data);
+    await w.close();
+  },
+  async loadDoc() {
+    const f = await this._readFile(this.root, "data.json");
+    return f ? JSON.parse(await f.text()) : null;
+  },
+  saveDoc(doc) { return this._writeFile(this.root, "data.json", JSON.stringify(doc, null, 2)); },
+  /* Photo names can carry a subfolder ("thumbs/..."), which handles can't
+     take in one step, so walk down to the right directory first. */
+  async _locate(name, create) {
+    const parts = name.split("/");
+    const file = parts.pop();
+    let dir = this.photos;
+    for (const part of parts) dir = await dir.getDirectoryHandle(part, { create });
+    return { dir, file };
+  },
+  async putBlob(name, b) {
+    const { dir, file } = await this._locate(name, true);
+    return this._writeFile(dir, file, b);
+  },
+  async getBlob(name) {
+    try {
+      const { dir, file } = await this._locate(name, false);
+      return await this._readFile(dir, file);
+    } catch (e) { if (e.name === "NotFoundError") return null; throw e; }
+  },
+  async delBlob(name) {
+    try {
+      const { dir, file } = await this._locate(name, false);
+      await dir.removeEntry(file);
+    } catch (e) { /* already gone */ }
+  },
+};
+
+/* ---------- 4. Memory only (last resort) ----------------------------------- */
+const MemBackend = {
+  kind: "mem", label: "Not saving", doc: null, blobs: new Map(),
+  async init() {
+    return { detail: "This browser will not let the page store anything from a local file. " +
+                     "Your work is only held in memory - export a backup before you close the tab.",
+             degraded: true };
+  },
+  async loadDoc()        { return this.doc; },
+  async saveDoc(doc)     { this.doc = doc; },
+  async putBlob(name, b) { this.blobs.set(name, b); },
+  async getBlob(name)    { return this.blobs.get(name) || null; },
+  async delBlob(name)    { this.blobs.delete(name); },
+};
+
+let store = null;         // the live backend
+let storeInfo = {};       // { detail, degraded }
+
+async function initStorage() {
+  const attempts = [ServerBackend, IdbBackend, FsaBackend, MemBackend];
+  const failures = [];
+  for (const backend of attempts) {
+    try {
+      const info = await backend.init();
+      store = backend;
+      storeInfo = Object.assign({ failures }, info);
+      return;
+    } catch (e) {
+      failures.push(backend.label + ": " + (e.message || e.name));
+    }
+  }
+}
+
+/* ==========================================================================
+   Application state
+   ========================================================================== */
+let state = null;
+let saveTimer = null;
+
+function blankMonth(key) {
+  return {
+    key,
+    unit: "", system: "", unitType: "",
+    bonusId: null, bonusDone: false,
+    status: "planned",
+    notes: "",
+    extras: [],          // second unit for Double Up! / Just Get It Done!
+    completedAt: null,
+  };
+}
+
+function blankState(start) {
+  const s = { version: 1, settings: { start: start || DEFAULT_START }, months: {}, photos: [], backlog: [] };
+  let key = s.settings.start;
+  for (let i = 0; i < MONTH_COUNT; i++) { s.months[key] = blankMonth(key); key = addMonths(key, 1); }
+  return s;
+}
+
+/* Keep the month map in step with the configured window without losing work. */
+function reconcileMonths() {
+  let key = state.settings.start;
+  const wanted = [];
+  for (let i = 0; i < MONTH_COUNT; i++) { wanted.push(key); key = addMonths(key, 1); }
+  for (const k of wanted) if (!state.months[k]) state.months[k] = blankMonth(k);
+  state.monthKeys = wanted;
+}
+const monthKeys = () => state.monthKeys;
+
+let saveFailing = false;
+let retryTimer = null;
+const docForSave = () => { const { monthKeys, ...doc } = state; return doc; };  // monthKeys is derived
+
+function save() {
+  clearTimeout(saveTimer);
+  clearTimeout(retryTimer);
+  saveTimer = setTimeout(async () => {
+    saveTimer = null;
+    try {
+      await store.saveDoc(docForSave());
+      if (saveFailing) { saveFailing = false; paintBadge(); toast("Saving again — nothing was lost", "ok"); }
+    } catch (e) {
+      if (!saveFailing) {
+        saveFailing = true; paintBadge();
+        toast(store.kind === "server"
+          ? "Could not save — is the tracker window still open? Run Start Tracker.cmd again; " +
+            "keep this tab open and it will catch up on its own."
+          : "Could not save: " + (e.message || e.name), "bad");
+      }
+      // Keep trying, so restarting the tracker is enough to catch up.
+      retryTimer = setTimeout(save, 4000);
+    }
+  }, 220);
+}
+window.addEventListener("pagehide", () => {
+  if (saveTimer && store && store.flushOnExit) store.flushOnExit(docForSave());
+});
+window.addEventListener("beforeunload", e => {
+  if (saveFailing) { e.preventDefault(); e.returnValue = ""; }  // browser shows its own "leave site?" prompt
+});
+
+function paintBadge() {
+  const tone = saveFailing || store.kind === "mem" ? "bad" : store.kind === "server" ? "ok" : "warn";
+  $("#storageBadge").className = "storage-badge " + tone;
+  $("#storageLabel").textContent = saveFailing ? "Not saving" : store.label;
+}
+
+/* ==========================================================================
+   Derived values - the challenge rules live here
+   ========================================================================== */
+const photosFor = (key, group, phase) =>
+  state.photos.filter(p => p.monthKey === key && p.group === group &&
+                           (!phase || p.phase === phase));
+
+/* Which bonus categories are already spoken for, and by which month. */
+function bonusUsage() {
+  const used = {};
+  for (const k of monthKeys()) {
+    const m = state.months[k];
+    if (m.bonusId) used[m.bonusId] = k;
+  }
+  return used;
+}
+const claimedBonuses = () =>
+  monthKeys().filter(k => state.months[k].bonusId && state.months[k].bonusDone);
+
+function stats() {
+  const keys = monthKeys();
+  const complete = keys.filter(k => state.months[k].status === "complete");
+  const missed   = keys.filter(k => state.months[k].status === "missed");
+  const claimed  = claimedBonuses();
+  const baseEntries  = Math.min(complete.length, MONTH_COUNT);
+  const bonusEntries = Math.min(claimed.length, MAX_BONUSES);
+
+  // Longest run of completed months ending at the most recent completed one.
+  let streak = 0, best = 0;
+  for (const k of keys) {
+    if (state.months[k].status === "complete") { streak++; best = Math.max(best, streak); }
+    else streak = 0;
+  }
+  let current = 0;
+  for (let i = keys.length - 1; i >= 0; i--) {
+    const st = state.months[keys[i]].status;
+    if (st === "complete") current++;
+    else if (current > 0 || st === "missed") break;
+  }
+  return {
+    complete: complete.length, missed: missed.length,
+    claimed: claimed.length, reserved: Object.keys(bonusUsage()).length,
+    baseEntries, bonusEntries, totalEntries: baseEntries + bonusEntries,
+    maxEntries: MONTH_COUNT + MAX_BONUSES,
+    sweep: complete.length === MONTH_COUNT,
+    streak: current, bestStreak: best,
+    photoCount: state.photos.length,
+    photoBytes: state.photos.reduce((a, p) => a + (p.size || 0), 0),
+  };
+}
+
+/* Deadline state for a month, relative to "now". */
+function deadlineState(key) {
+  const m  = state.months[key];
+  const t  = now();
+  const bd = beforeDeadline(key), ad = afterDeadline(key);
+  const hasBefore = photosFor(key, "main", "before").length > 0;
+  const hasAfter  = photosFor(key, "main", "after").length > 0;
+
+  if (m.status === "complete") return { tone: "ok",     text: "Complete", done: true };
+  if (m.status === "skipped")  return { tone: "",       text: "Skipped",  done: true };
+  if (m.status === "missed")   return { tone: "danger", text: "Missed" };
+
+  // Past the month-end deadline with nothing finished: the entry is gone.
+  if (t > ad && !hasAfter) return { tone: "danger", text: "Month closed" };
+
+  /* Compare instants rather than day counts - a deadline that passed a few
+     hours ago is still a whole-number zero days away. */
+  if (!hasBefore) {
+    if (t > bd) return { tone: "danger", text: "Before photo overdue (" + fmtDate(bd) + ")" };
+    const d = daysBetween(t, bd);
+    if (d <= 3) return { tone: "warn", text: "Before photo due " + humanUntil(bd, t) };
+    return { tone: "", text: "Before photo by " + fmtDate(bd) };
+  }
+  if (t > ad) return { tone: "danger", text: "Finished photo overdue" };
+  const d = daysBetween(t, ad);
+  if (d <= 5) return { tone: "warn", text: "Finish " + humanUntil(ad, t) };
+  return { tone: "", text: "Finish by " + fmtDate(ad) };
+}
+
+function isCurrentMonth(key) {
+  const t = now();
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit" })
+    .format(t).slice(0, 7);
+  return p === key;
+}
+function isPastMonth(key) { return now() > afterDeadline(key); }
+
+/* ==========================================================================
+   Photos
+   ========================================================================== */
+const THUMB_MAX = 640;
+const urlCache = new Map();          // photo filename -> URL the page can show
+
+async function urlFor(name) {
+  if (!name) return null;
+  if (urlCache.has(name)) return urlCache.get(name);
+  let url;
+  if (store.urlFor) {
+    url = store.urlFor(name);          // served from disk, nothing to load
+  } else {
+    const blob = await store.getBlob(name);
+    if (!blob) return null;
+    url = URL.createObjectURL(blob);
+  }
+  urlCache.set(name, url);
+  return url;
+}
+function dropUrl(name) {
+  const url = urlCache.get(name);
+  if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+  urlCache.delete(name);
+}
+/* Thumbnails are tiny; loading them all up front keeps rendering synchronous. */
+async function warmThumbs() {
+  await Promise.all(state.photos.map(p => urlFor(p.thumb).catch(() => null)));
+}
+const thumbUrl = p => urlCache.get(p.thumb) || null;
+
+async function decode(blob) {
+  if (typeof createImageBitmap === "function") {
+    try { return await createImageBitmap(blob); } catch (e) { /* fall through */ }
+  }
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("not an image")); img.src = url; });
+    return img;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+async function makeThumb(blob) {
+  const src = await decode(blob);
+  const w0 = src.width, h0 = src.height;
+  const scale = Math.min(1, THUMB_MAX / Math.max(w0, h0));
+  const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  canvas.getContext("2d").drawImage(src, 0, 0, w, h);
+  if (src.close) src.close();
+  const out = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.82));
+  return { blob: out || blob, w: w0, h: h0 };
+}
+
+const extOf = file => {
+  const m = /\.([a-z0-9]+)$/i.exec(file.name || "");
+  if (m) return m[1].toLowerCase();
+  return ({ "image/png":"png", "image/jpeg":"jpg", "image/webp":"webp", "image/gif":"gif" })[file.type] || "jpg";
+};
+
+async function addPhotos(files, monthKey, group, phase) {
+  let added = 0;
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) { toast(file.name + " is not an image", "bad"); continue; }
+    /* Names say what the photo is, so the photos folder is browsable on its
+       own: 2026-10_main_before_<id>.jpg, with its preview in photos/thumbs. */
+    const id    = uid();
+    const base  = [monthKey, group, phase, id].join("_");
+    const full  = base + "." + extOf(file);
+    const thumb = "thumbs/" + base + ".jpg";
+    try {
+      const t = await makeThumb(file);
+      await store.putBlob(full, file);
+      await store.putBlob(thumb, t.blob);
+      urlCache.set(thumb, store.urlFor ? store.urlFor(thumb) : URL.createObjectURL(t.blob));
+      state.photos.push({
+        id, monthKey, group, phase, file: full, thumb,
+        name: file.name || (phase + " photo"), type: file.type, size: file.size,
+        w: t.w, h: t.h, addedAt: new Date().toISOString(), caption: "",
+      });
+      added++;
+    } catch (e) {
+      // Don't leave half a photo behind in the folder.
+      store.delBlob(full).catch(() => {});
+      store.delBlob(thumb).catch(() => {});
+      toast("Could not add " + (file.name || "image") + ": " + (e.message || e.name), "bad");
+    }
+  }
+  if (added) { save(); toast(added + (added === 1 ? " photo added" : " photos added"), "ok"); }
+  return added;
+}
+
+async function deletePhoto(id) {
+  const i = state.photos.findIndex(p => p.id === id);
+  if (i < 0) return;
+  const p = state.photos[i];
+  state.photos.splice(i, 1);
+  dropUrl(p.thumb); dropUrl(p.file);
+  try { await store.delBlob(p.file); await store.delBlob(p.thumb); } catch (e) { /* ignore */ }
+  save();
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = el("a", { href: url, download: filename });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ==========================================================================
+   Views
+   ========================================================================== */
+let activeView = "board";
+
+function setView(name) {
+  activeView = name;
+  $$("#tabs button").forEach(b => b.setAttribute("aria-current", String(b.dataset.view === name)));
+  $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+  render();
+}
+
+function render() {
+  $("#brandRange").textContent =
+    monthLabel(monthKeys()[0]) + " – " + monthLabel(monthKeys()[MONTH_COUNT - 1]);
+  if (activeView === "board")   { renderStrip($("#boardStrip")); renderBoard(); }
+  if (activeView === "bonuses") renderBonuses();
+  if (activeView === "backlog") renderBacklog();
+  if (activeView === "stats")   { renderStrip($("#statsStrip"), true); renderStatsTable(); }
+  if (activeView === "data")    renderData();
+}
+
+/* ---------- summary tiles -------------------------------------------------- */
+function renderStrip(host, full) {
+  const s = stats();
+  const tile = (k, v, sub, barPct, barOk) =>
+    el("div", { class: "stat" },
+      el("div", { class: "k", text: k }),
+      el("div", { class: "v" }, v),
+      sub ? el("div", { class: "sub", text: sub }) : null,
+      barPct !== undefined
+        ? el("div", { class: "bar" }, el("i", { class: barOk ? "ok" : "", style: barStyle(barPct) }))
+        : null);
+
+  host.replaceChildren(...[
+    tile("Entries", [String(s.totalEntries), el("small", { text: " / " + s.maxEntries })],
+         s.baseEntries + " monthly + " + s.bonusEntries + " bonus",
+         (s.totalEntries / s.maxEntries) * 100),
+    tile("Months done", [String(s.complete), el("small", { text: " / 12" })],
+         s.sweep ? "Clean sweep - in the special pool" : (s.missed ? s.missed + " missed" : " "),
+         (s.complete / 12) * 100, s.sweep),
+    tile("Bonuses", [String(s.claimed), el("small", { text: " / " + MAX_BONUSES })],
+         s.reserved > s.claimed ? (s.reserved - s.claimed) + " planned, not yet earned" : " ",
+         (s.claimed / MAX_BONUSES) * 100),
+    tile("Streak", String(s.streak), s.streak === 1 ? "month in a row" : "months in a row"),
+    full ? tile("Photos", String(s.photoCount), bytes(s.photoBytes)) : null,
+  ].filter(Boolean));
+}
+
+/* ---------- year board ----------------------------------------------------- */
+function renderBoard() {
+  const host = $("#board");
+  host.replaceChildren(...monthKeys().map((key, i) => {
+    const m  = state.months[key];
+    const dl = deadlineState(key);
+    const st = STATUS_BY_ID[m.status] || STATUS_BY_ID.planned;
+    const bonus = m.bonusId ? BONUS_BY_ID[m.bonusId] : null;
+
+    const slot = phase => {
+      const shots = photosFor(key, "main", phase);
+      const url = shots.length ? thumbUrl(shots[0]) : null;
+      return el("div", { class: "thumbslot" + (shots.length ? " has" : "") },
+        url ? el("img", { src: url, alt: phase + " photo", loading: "lazy" })
+            : el("span", { class: "ph", text: phase }),
+        shots.length > 1 ? el("span", { class: "cnt", text: "+" + (shots.length - 1) }) : null);
+    };
+
+    return el("button", {
+      "aria-label": monthLabelLong(key) + " — " + (m.unit || "nothing planned") +
+                    ", " + st.label + ". " + dl.text,
+      style: "--stripe:" + rampAt(i / (MONTH_COUNT - 1)),
+      class: "mcard" +
+             (isCurrentMonth(key) ? " is-now" : "") +
+             (m.status === "complete" ? " is-complete" : "") +
+             (m.status === "missed" ? " is-missed" : "") +
+             (isPastMonth(key) && m.status !== "complete" ? " is-past" : ""),
+      onclick: () => openMonth(key),
+    },
+      el("div", { class: "mcard-top" },
+        el("span", { class: "mcard-month", text: monthLabel(key) }),
+        el("span", { class: "mcard-idx", text: (i + 1) + "/12" })),
+      el("div", { class: "mcard-unit" },
+        m.unit ? el("span", { text: m.unit }) : el("span", { class: "none", text: "Nothing planned yet" }),
+        m.system ? el("span", { class: "sys", text: m.system }) : null,
+        m.extras.length ? el("span", { class: "sys", text: "+ " + m.extras.filter(x => x.unit).map(x => x.unit).join(", ") }) : null),
+      el("div", { class: "mcard-thumbs" }, slot("before"), slot("after")),
+      el("div", { class: "mcard-foot" },
+        el("span", { class: "pill " + st.cls, text: st.label }),
+        bonus ? el("span", { class: "pill " + (m.bonusDone ? "ok" : "accent"),
+                             title: bonus.name, text: (m.bonusDone ? "✓ " : "") + shortBonus(bonus) }) : null),
+      el("div", { class: "deadline-line " + dl.tone },
+        el("span", { text: dl.text })));
+  }));
+}
+const shortBonus = b => b.name.length > 22 ? b.name.split(/[,(]/)[0].trim().slice(0, 21) + "…" : b.name;
+
+/* ---------- bonuses -------------------------------------------------------- */
+function renderBonuses() {
+  const used = bonusUsage();
+  const s = stats();
+  $("#bonusCounter").textContent = s.claimed + " / " + MAX_BONUSES + " claimed";
+  $("#bonusCounter").className = "pill " + (s.claimed >= MAX_BONUSES ? "ok" : "accent");
+
+  $("#bonusGrid").replaceChildren(...BONUSES.map(b => {
+    const key = used[b.id];
+    const m   = key ? state.months[key] : null;
+    const earned = m && m.bonusDone;
+    const capped = !key && s.claimed >= MAX_BONUSES;
+
+    return el("div", { class: "bcard " + (earned ? "claimed" : key ? "reserved" : capped ? "blocked" : ""),
+                       style: "--stripe:" + rampAt((b.n - 1) / (BONUSES.length - 1)) },
+      el("div", { class: "bcard-top" },
+        el("h4", { text: b.name }),
+        el("span", { class: "num", text: String(b.n).padStart(2, "0") })),
+      el("p", { text: b.desc }),
+      el("div", { class: "req" },
+        b.needsBeforeAfter ? el("span", { class: "pill tag", text: "before + after required" }) : null,
+        b.shots === "workspace" ? el("span", { class: "pill tag", text: "workspace, not a model" }) : null,
+        b.shots === "evidence" ? el("span", { class: "pill tag", text: "screenshot evidence" }) : null,
+        b.extraUnits ? el("span", { class: "pill tag", text: "two units" }) : null),
+      el("div", { class: "row", style: "margin-top:auto;padding-top:6px" },
+        earned ? el("span", { class: "pill ok", text: "✓ Earned in " + monthLabel(key) })
+        : key  ? el("span", { class: "pill accent", text: "Planned for " + monthLabel(key) })
+        : capped ? el("span", { class: "pill", text: "Six bonuses already claimed" })
+        : el("span", { class: "pill", text: "Available" }),
+        key ? el("button", { class: "btn sm ghost", text: "Open " + monthLabel(key),
+                             onclick: () => { setView("board"); openMonth(key); } }) : null));
+  }));
+}
+
+/* ---------- backlog -------------------------------------------------------- */
+function renderBacklog() {
+  const filter = ($("#backlogFilter").value || "").toLowerCase();
+  const items = state.backlog.filter(b =>
+    !filter || (b.unit + " " + b.system + " " + b.unitType + " " + b.notes).toLowerCase().includes(filter));
+
+  if (!state.backlog.length) {
+    $("#backlogWrap").replaceChildren(el("div", { class: "empty" },
+      "Nothing in the backlog yet. Add the unpainted units you already own and you can drop them straight into a month."));
+    return;
+  }
+  const rows = items.map(b => {
+    const planned = monthKeys().find(k => state.months[k].unit === b.unit && b.state === "planned");
+    return el("tr", null,
+      el("td", null, el("strong", { text: b.unit }),
+        b.notes ? el("div", { class: "dim", style: "font-size:12px", text: b.notes }) : null),
+      el("td", { class: "dim", text: b.system || "—" }),
+      el("td", { class: "dim", text: b.unitType || "—" }),
+      el("td", null, el("span", { class: "pill " + (b.state === "painted" ? "ok" : b.state === "planned" ? "accent" : ""),
+                                  text: b.state === "planned" ? ("Planned" + (planned ? " · " + monthLabel(planned) : "")) :
+                                        b.state === "painted" ? "Painted" : "Available" })),
+      el("td", null, el("div", { class: "row", style: "gap:6px;flex-wrap:nowrap" },
+        el("button", { class: "btn sm", text: "Plan into…", onclick: () => planBacklogItem(b) }),
+        el("button", { class: "btn sm ghost", text: "Edit", onclick: () => editBacklogItem(b) }),
+        el("button", { class: "btn sm ghost danger", text: "✕", title: "Remove",
+                       onclick: () => { state.backlog = state.backlog.filter(x => x.id !== b.id); save(); render(); } }))));
+  });
+
+  $("#backlogWrap").replaceChildren(el("div", { class: "tbl-wrap" },
+    el("table", { class: "tbl" },
+      el("thead", null, el("tr", null,
+        el("th", { text: "Unit" }), el("th", { text: "System" }), el("th", { text: "Type" }),
+        el("th", { text: "State" }), el("th", { text: "" }))),
+      el("tbody", null, ...(rows.length ? rows
+        : [el("tr", null, el("td", { colspan: "5", class: "dim", style: "padding:20px;text-align:center",
+                                     text: "Nothing matches that filter." }))])))));
+}
+
+/* ---------- stats table ---------------------------------------------------- */
+function renderStatsTable() {
+  const rows = monthKeys().map((key, i) => {
+    const m = state.months[key];
+    const st = STATUS_BY_ID[m.status] || STATUS_BY_ID.planned;
+    const bonus = m.bonusId ? BONUS_BY_ID[m.bonusId] : null;
+    const before = photosFor(key, "main", "before").length;
+    const after  = photosFor(key, "main", "after").length;
+    return el("tr", null,
+      el("td", null, el("strong", { text: monthLabelLong(key) }),
+        el("div", { class: "dim", style: "font-size:11px", text: "Month " + (i + 1) })),
+      el("td", null, m.unit || el("span", { class: "dim", text: "—" })),
+      el("td", { class: "dim", text: m.system || "—" }),
+      el("td", null, el("span", { class: "pill " + st.cls, text: st.label })),
+      el("td", null, bonus ? el("span", { class: "pill " + (m.bonusDone ? "ok" : "accent"),
+                                          text: (m.bonusDone ? "✓ " : "") + bonus.name })
+                           : el("span", { class: "dim", text: "—" })),
+      el("td", { class: "dim", text: before + " / " + after }));
+  });
+  $("#statsTable").replaceChildren(el("div", { class: "tbl-wrap" },
+    el("table", { class: "tbl" },
+      el("thead", null, el("tr", null,
+        el("th", { text: "Month" }), el("th", { text: "Unit" }), el("th", { text: "System" }),
+        el("th", { text: "Status" }), el("th", { text: "Bonus" }), el("th", { text: "Before / after" }))),
+      el("tbody", null, ...rows))));
+}
+
+/* ---------- data view ------------------------------------------------------ */
+function renderData() {
+  const s = stats();
+  const lines = [
+    "Backend in use: " + store.label + ".",
+    storeInfo.detail || "",
+    s.photoCount + (s.photoCount === 1 ? " photo, " : " photos, ") + bytes(s.photoBytes) + " of originals.",
+  ];
+  if (storeInfo.failures && storeInfo.failures.length)
+    lines.push("Tried first: " + storeInfo.failures.join("; ") + ".");
+  $("#storageDetail").replaceChildren(...lines.filter(Boolean).flatMap((t, i) =>
+    i ? [el("br"), document.createTextNode(t)] : [document.createTextNode(t)]));
+  $("#startMonth").value = state.settings.start;
+  // Photos are already plain files in server mode, so offer the folder instead.
+  $("#btnOpenFolder").hidden = !store.openFolder;
+  $("#btnExportPhotos").hidden = !!store.openFolder;
+  paintBadge();
+}
+
+/* ==========================================================================
+   Generic dialogs
+   ========================================================================== */
+function confirmDialog(title, body, okLabel, danger) {
+  return new Promise(resolve => {
+    const dlg = $("#genericDlg");
+    let done = false;
+    const finish = v => { if (done) return; done = true; dlg.close(); resolve(v); };
+    dlg.replaceChildren(
+      el("div", { class: "dlg-head" }, el("h3", { text: title })),
+      el("div", { class: "dlg-body", style: "max-width:520px" },
+        ...String(body).split("\n").map(line =>
+          el("p", { style: "margin:0 0 10px;color:var(--muted);line-height:1.65", text: line }))),
+      el("div", { class: "dlg-foot" },
+        el("span", { class: "spacer" }),
+        el("button", { class: "btn ghost", text: "Cancel", onclick: () => finish(false) }),
+        el("button", { class: "btn " + (danger ? "danger" : "primary"), text: okLabel || "OK",
+                       onclick: () => finish(true) })));
+    dlg.addEventListener("close", () => finish(false), { once: true });
+    dlg.showModal();
+  });
+}
+
+/* ==========================================================================
+   Drop zones
+   ========================================================================== */
+/* Live zones, so adding a photo repaints only its own zone. Rebuilding the
+   whole dialog would throw away the caret, the scroll position and any
+   element the user is mid-interaction with. */
+const zones = new Map();
+const zoneKey = (monthKey, group, phase) => monthKey + "|" + group + "|" + phase;
+function refreshZone(monthKey, group, phase) {
+  const z = zones.get(zoneKey(monthKey, group, phase));
+  if (z && z.isConnected) z._refresh();
+  else refreshMonthDialog();
+}
+
+function makeDropzone(opts) {
+  const { monthKey, group, phase, title, hint } = opts;
+  const zone = el("div", { class: "dropzone" });
+
+  const refresh = () => {
+    const shots = photosFor(monthKey, group, phase);
+    zone.replaceChildren(
+      el("div", { class: "dz-head" },
+        el("span", { class: "dz-title", text: title }),
+        el("button", { class: "btn sm ghost", text: "Add…", onclick: () => pickFiles(monthKey, group, phase) })),
+      shots.length
+        ? el("div", { class: "shots" }, ...shots.map(p => shotTile(p, monthKey, group, phase)))
+        : el("div", { class: "dz-empty" },
+            el("div", { text: hint || "Drag an image here" }),
+            el("div", null, "or paste with ", el("kbd", { text: "Ctrl" }), " ", el("kbd", { text: "V" }))));
+  };
+
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  zone.addEventListener("dragover", e => { stop(e); zone.classList.add("over"); });
+  zone.addEventListener("dragleave", e => { stop(e); zone.classList.remove("over"); });
+  zone.addEventListener("drop", async e => {
+    stop(e); zone.classList.remove("over");
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length) {
+      await addPhotos(files, monthKey, group, phase);
+      refreshZone(monthKey, group, phase); render();
+    }
+  });
+  zone.addEventListener("click", () => { pasteTarget = { monthKey, group, phase }; });
+
+  zone._refresh = refresh;
+  zones.set(zoneKey(monthKey, group, phase), zone);
+  refresh();
+  return zone;
+}
+
+function shotTile(p, monthKey, group, phase) {
+  const url = thumbUrl(p);
+  return el("div", { class: "shot" },
+    p.caption ? el("div", { class: "cap", text: p.caption }) : null,
+    url ? el("img", { src: url, alt: p.name, loading: "lazy", onclick: () => openLightbox(p.id) })
+        : el("div", { class: "dz-empty", text: "…" }),
+    el("div", { class: "tools" },
+      el("button", { text: "View", onclick: () => openLightbox(p.id) }),
+      el("button", { text: "Save", onclick: async () => {
+        const blob = await store.getBlob(p.file);
+        if (blob) downloadBlob(blob, p.name || (p.id + ".jpg"));
+      } }),
+      el("button", { text: "✕", title: "Delete", onclick: async () => {
+        if (await confirmDialog("Delete this photo?", "The image file will be removed permanently.", "Delete", true)) {
+          await deletePhoto(p.id);
+          refreshZone(monthKey, group, phase); render();
+        }
+      } })));
+}
+
+let pasteTarget = null;
+function pickFiles(monthKey, group, phase) {
+  const picker = $("#filePicker");
+  picker.value = "";
+  picker.onchange = async () => {
+    const files = Array.from(picker.files || []);
+    if (files.length) {
+      await addPhotos(files, monthKey, group, phase);
+      refreshZone(monthKey, group, phase); render();
+    }
+  };
+  picker.click();
+}
+document.addEventListener("paste", async e => {
+  if (!pasteTarget || !openMonthKey) return;
+  const files = Array.from(e.clipboardData.files || []).filter(f => f.type.startsWith("image/"));
+  if (!files.length) return;
+  e.preventDefault();
+  const { monthKey, group, phase } = pasteTarget;
+  await addPhotos(files, monthKey, group, phase);
+  refreshZone(monthKey, group, phase); render();
+});
+
+/* ==========================================================================
+   Lightbox
+   ========================================================================== */
+async function openLightbox(photoId) {
+  const dlg = $("#lightbox");
+  const p = state.photos.find(x => x.id === photoId);
+  if (!p) return;
+  const siblings = state.photos.filter(x => x.monthKey === p.monthKey && x.group === p.group);
+  let idx = siblings.findIndex(x => x.id === photoId);
+
+  const draw = async () => {
+    const cur = siblings[idx];
+    const url = await urlFor(cur.file);
+    dlg.replaceChildren(el("div", { class: "lb-wrap" },
+      url ? el("img", { src: url, alt: cur.name }) : el("div", { class: "empty", text: "Image missing" }),
+      el("div", { class: "lb-bar" },
+        el("button", { class: "btn sm ghost", text: "‹ Prev", disabled: siblings.length < 2,
+                       onclick: () => { idx = (idx - 1 + siblings.length) % siblings.length; draw(); } }),
+        el("span", { text: cur.phase + " · " + (cur.name || "") + " · " + cur.w + "×" + cur.h + " · " + bytes(cur.size) }),
+        el("button", { class: "btn sm ghost", text: "Next ›", disabled: siblings.length < 2,
+                       onclick: () => { idx = (idx + 1) % siblings.length; draw(); } }),
+        el("button", { class: "btn sm", text: "Close", onclick: () => dlg.close() }))));
+  };
+  await draw();
+  dlg.showModal();
+}
+
+/* ==========================================================================
+   Month dialog
+   ========================================================================== */
+let openMonthKey = null;
+
+function openMonth(key) {
+  openMonthKey = key;
+  buildMonthDialog();
+  const dlg = $("#monthDlg");
+  if (!dlg.open) dlg.showModal();
+}
+function refreshMonthDialog() { if (openMonthKey) buildMonthDialog(); }
+
+function buildMonthDialog() {
+  const key = openMonthKey;
+  const m   = state.months[key];
+  const dlg = $("#monthDlg");
+  const used = bonusUsage();
+  const s = stats();
+  const bonus = m.bonusId ? BONUS_BY_ID[m.bonusId] : null;
+  const dl = deadlineState(key);
+
+  const touch = () => { save(); render(); };
+
+  // A full rebuild resets the scroll box, so put the reader back where they were.
+  const priorScroll = (dlg.querySelector(".dlg-body") || {}).scrollTop || 0;
+  zones.clear();
+
+  /* --- bonus picker: rules decide which options are even selectable --- */
+  const bonusSelect = el("select", null,
+    el("option", { value: "", text: "— no bonus this month —" }),
+    ...BONUSES.map(b => {
+      const takenBy = used[b.id];
+      const takenElsewhere = takenBy && takenBy !== key;
+      const capped = !takenBy && s.claimed >= MAX_BONUSES && m.bonusId !== b.id;
+      let label = String(b.n).padStart(2, "0") + ". " + b.name;
+      if (takenElsewhere) label += "  (used in " + monthLabel(takenBy) + ")";
+      else if (capped)    label += "  (six bonuses already earned)";
+      return el("option", {
+        value: b.id, text: label,
+        disabled: takenElsewhere || capped,
+        selected: m.bonusId === b.id,
+      });
+    }));
+  bonusSelect.addEventListener("change", () => {
+    m.bonusId = bonusSelect.value || null;
+    if (!m.bonusId) m.bonusDone = false;
+    const nb = m.bonusId ? BONUS_BY_ID[m.bonusId] : null;
+    const wantExtras = nb && nb.extraUnits ? nb.extraUnits : 0;
+    while (m.extras.length < wantExtras) m.extras.push({ id: uid(), unit: "", system: "", notes: "" });
+    touch(); buildMonthDialog();
+  });
+
+  const statusSelect = el("select", null,
+    ...STATUSES.map(st => el("option", { value: st.id, text: st.label, selected: m.status === st.id })));
+  statusSelect.addEventListener("change", () => {
+    m.status = statusSelect.value;
+    m.completedAt = m.status === "complete" ? (m.completedAt || new Date().toISOString()) : null;
+    touch(); buildMonthDialog();
+  });
+
+  const bind = (node, field, obj) => {
+    node.value = (obj || m)[field] || "";
+    node.addEventListener("input", () => { (obj || m)[field] = node.value; save(); });
+    node.addEventListener("change", () => render());
+    return node;
+  };
+
+  /* --- photo sections depend on which bonus is selected --- */
+  const photoSections = [
+    el("div", { class: "fieldset" },
+      el("h4", { text: "The unit — before and after" }),
+      el("div", { class: "photo-cols" },
+        makeDropzone({ monthKey: key, group: "main", phase: "before", title: "Before · unpainted or primed",
+                       hint: "Due by the 10th, with your name/date card in shot" }),
+        makeDropzone({ monthKey: key, group: "main", phase: "after", title: "After · finished",
+                       hint: "Due by the last day of the month" }))),
+  ];
+
+  if (bonus && bonus.extraUnits) {
+    m.extras.slice(0, bonus.extraUnits).forEach((ex, i) => {
+      photoSections.push(el("div", { class: "fieldset" },
+        el("h4", { text: "Second unit — " + bonus.name }),
+        el("div", { class: "grid2" },
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "Unit" }),
+            bind(el("input", { type: "text", placeholder: "e.g. Tactical Squad" }), "unit", ex)),
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "System / army" }),
+            bind(el("input", { type: "text" }), "system", ex))),
+        bonus.id === "jgid"
+          ? el("p", { class: "hint", style: "margin:-4px 0 12px",
+                      text: "Both units must have been no more than 75% finished when you started." }) : null,
+        el("div", { class: "photo-cols" },
+          makeDropzone({ monthKey: key, group: "extra" + i, phase: "before", title: "Before" }),
+          makeDropzone({ monthKey: key, group: "extra" + i, phase: "after", title: "After" }))));
+    });
+  }
+  if (bonus && bonus.shots === "workspace") {
+    photoSections.push(el("div", { class: "fieldset" },
+      el("h4", { text: "Workspace — " + bonus.name }),
+      el("p", { class: "hint", style: "margin:-4px 0 12px", text: bonus.desc }),
+      el("div", { class: "photo-cols" },
+        makeDropzone({ monthKey: key, group: "bonus", phase: "before", title: "Desk before" }),
+        makeDropzone({ monthKey: key, group: "bonus", phase: "after", title: "Desk after" }))));
+  }
+  if (bonus && bonus.shots === "evidence") {
+    photoSections.push(el("div", { class: "fieldset" },
+      el("h4", { text: "Evidence — " + bonus.name }),
+      el("p", { class: "hint", style: "margin:-4px 0 12px", text: bonus.desc }),
+      makeDropzone({ monthKey: key, group: "bonus", phase: "evidence", title: "Screenshot",
+                     hint: "Everyone holding up what they are working on" })));
+  }
+
+  const bonusDoneBox = el("input", { type: "checkbox" });
+  bonusDoneBox.checked = !!m.bonusDone;
+  bonusDoneBox.disabled = !m.bonusId;
+  bonusDoneBox.addEventListener("change", () => {
+    if (bonusDoneBox.checked && s.claimed >= MAX_BONUSES && !m.bonusDone) {
+      bonusDoneBox.checked = false;
+      toast("You already have " + MAX_BONUSES + " bonus entries — that is the maximum.", "bad");
+      return;
+    }
+    m.bonusDone = bonusDoneBox.checked; touch(); buildMonthDialog();
+  });
+
+  dlg.replaceChildren(
+    el("div", { class: "dlg-head" },
+      el("h3", { text: monthLabelLong(key) }),
+      el("span", { class: "pill " + dl.tone, text: dl.text }),
+      el("span", { class: "spacer" }),
+      el("button", { class: "btn sm ghost", text: "Name card", onclick: () => showNameCard(key) }),
+      el("button", { class: "btn sm", text: "Close", onclick: () => { openMonthKey = null; dlg.close(); } })),
+
+    el("div", { class: "dlg-body" },
+      el("div", { class: "fieldset" },
+        el("h4", { text: "The plan" }),
+        el("div", { class: "grid2" },
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "Unit" }),
+            bind(el("input", { type: "text", placeholder: "e.g. Intercessor Squad" }), "unit")),
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "System / army" }),
+            bind(el("input", { type: "text", placeholder: "e.g. Warhammer 40,000 — Dark Angels" }), "system")),
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "Unit type" }),
+            bind(el("input", { type: "text", placeholder: "e.g. Battleline, Vehicle, Character" }), "unitType")),
+          el("label", { class: "field" }, el("span", { class: "lbl", text: "Status" }), statusSelect))),
+
+      el("div", { class: "fieldset" },
+        el("h4", { text: "Bonus entry" }),
+        el("label", { class: "field" }, el("span", { class: "lbl", text: "Category (one per month, each usable once)" }), bonusSelect),
+        bonus ? el("p", { class: "hint", style: "margin:-6px 0 10px", text: bonus.desc }) : null,
+        el("label", { class: "row", style: "gap:8px;cursor:pointer" },
+          bonusDoneBox,
+          el("span", { text: "Bonus earned — the requirements are met and submitted" })),
+        m.bonusId && m.bonusDone
+          ? el("p", { class: "hint", text: "Counts as bonus entry " + s.claimed + " of " + MAX_BONUSES + "." })
+          : null),
+
+      ...photoSections,
+
+      el("div", { class: "fieldset" },
+        el("h4", { text: "Notes" }),
+        bind(el("textarea", { placeholder: "Recipes, paints used, what went well, what to fix next time…" }), "notes")),
+
+      el("div", { class: "fieldset" },
+        el("h4", { text: "Deadlines (Pacific time)" }),
+        el("p", { class: "hint", style: "margin:0" },
+          "Unpainted photo by " + fmtDate(beforeDeadline(key)) + " · " +
+          "finished photo by " + fmtDate(afterDeadline(key)) + ". " +
+          "Miss the month and you lose its entry, but you can still finish the unit next month."))),
+
+    el("div", { class: "dlg-foot" },
+      el("button", { class: "btn ghost danger", text: "Clear this month", onclick: async () => {
+        if (await confirmDialog("Clear " + monthLabelLong(key) + "?",
+            "The plan, notes and bonus choice will be reset. Photos are kept — delete those individually if you want them gone.",
+            "Clear", true)) {
+          Object.assign(state.months[key], blankMonth(key));
+          touch(); buildMonthDialog();
+        }
+      } }),
+      el("span", { class: "spacer" }),
+      el("button", { class: "btn sm ghost", text: "‹ " + monthLabel(addMonths(key, -1)),
+                     disabled: key === monthKeys()[0],
+                     onclick: () => openMonth(addMonths(key, -1)) }),
+      el("button", { class: "btn sm ghost", text: monthLabel(addMonths(key, 1)) + " ›",
+                     disabled: key === monthKeys()[MONTH_COUNT - 1],
+                     onclick: () => openMonth(addMonths(key, 1)) }),
+      el("button", { class: "btn primary", text: "Done", onclick: () => { openMonthKey = null; dlg.close(); } })));
+
+  const body = dlg.querySelector(".dlg-body");
+  if (body && priorScroll) body.scrollTop = priorScroll;
+}
+$("#monthDlg").addEventListener("close", () => { openMonthKey = null; pasteTarget = null; zones.clear(); });
+
+/* ==========================================================================
+   Name / date card
+   ========================================================================== */
+function showNameCard(key) {
+  const m = state.months[key];
+  const dlg = $("#genericDlg");
+  const today = new Intl.DateTimeFormat("en-GB",
+    { day: "numeric", month: "long", year: "numeric" }).format(now());
+
+  const card = el("div", { class: "namecard", id: "ncard" },
+    el("div", { class: "nc-name", text: m.unit || "(unit name)" }),
+    m.system ? el("div", { class: "nc-sys", text: m.system }) : null,
+    el("div", { class: "nc-date", text: today }),
+    el("div", { class: "nc-tag", text: "Hobby Progress Challenge · " + monthLabelLong(key) }));
+
+  dlg.replaceChildren(
+    el("div", { class: "dlg-head" }, el("h3", { text: "Name / date card" }),
+      el("span", { class: "spacer" }),
+      el("button", { class: "btn sm", text: "Close", onclick: () => dlg.close() })),
+    el("div", { class: "dlg-body", style: "max-width:560px" },
+      el("p", { class: "hint", style: "margin-top:0" },
+        "The rules want a card with the unit name and date visible in every photo. " +
+        "Prop a phone or tablet showing this next to the model, or print it."),
+      card),
+    el("div", { class: "dlg-foot" },
+      el("span", { class: "spacer" }),
+      el("button", { class: "btn", text: "Print", onclick: () => window.print() }),
+      el("button", { class: "btn primary", text: "Save as PNG", onclick: () => saveCardPng(m, key, today) })));
+  dlg.showModal();
+}
+
+function saveCardPng(m, key, today) {
+  const W = 1200, H = 700, c = el("canvas");
+  c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#111111"; x.textAlign = "center";
+  const name = m.unit || "(unit name)";
+  let size = 96;
+  x.font = "800 " + size + 'px "Segoe UI", sans-serif';
+  while (x.measureText(name).width > W - 120 && size > 34) {
+    size -= 4; x.font = "800 " + size + 'px "Segoe UI", sans-serif';
+  }
+  x.fillText(name, W / 2, 270);
+  if (m.system) {
+    x.font = '400 40px "Segoe UI", sans-serif'; x.fillStyle = "#555555";
+    x.fillText(m.system, W / 2, 340);
+  }
+  x.font = '600 62px "Segoe UI", sans-serif'; x.fillStyle = "#111111";
+  x.fillText(today, W / 2, 470);
+  x.font = '500 30px "Segoe UI", sans-serif'; x.fillStyle = "#777777";
+  x.fillText("Hobby Progress Challenge · " + monthLabelLong(key), W / 2, 560);
+  c.toBlob(b => downloadBlob(b, "name-card-" + key + ".png"), "image/png");
+}
+
+/* ==========================================================================
+   Backlog editing
+   ========================================================================== */
+function editBacklogItem(item) {
+  const isNew = !item;
+  const draft = item ? Object.assign({}, item)
+                     : { id: uid(), unit: "", system: "", unitType: "", notes: "", state: "available" };
+  const dlg = $("#genericDlg");
+  const f = (label, field, ph) => el("label", { class: "field" },
+    el("span", { class: "lbl", text: label }),
+    el("input", { type: "text", value: draft[field] || "", placeholder: ph || "",
+                  oninput: e => draft[field] = e.target.value }));
+
+  dlg.replaceChildren(
+    el("div", { class: "dlg-head" }, el("h3", { text: isNew ? "Add to backlog" : "Edit backlog unit" })),
+    el("div", { class: "dlg-body", style: "max-width:520px" },
+      f("Unit", "unit", "e.g. Leman Russ Battle Tank"),
+      f("System / army", "system", "e.g. Warhammer 40,000 — Astra Militarum"),
+      f("Unit type", "unitType", "e.g. Vehicle"),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: "Notes" }),
+        el("textarea", { oninput: e => draft.notes = e.target.value }, draft.notes || "")),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: "State" }),
+        el("select", { onchange: e => draft.state = e.target.value },
+          ...[["available", "Available"], ["planned", "Planned into a month"], ["painted", "Painted"]]
+            .map(([v, t]) => el("option", { value: v, text: t, selected: draft.state === v }))))),
+    el("div", { class: "dlg-foot" },
+      el("span", { class: "spacer" }),
+      el("button", { class: "btn ghost", text: "Cancel", onclick: () => dlg.close() }),
+      el("button", { class: "btn primary", text: "Save", onclick: () => {
+        if (!draft.unit.trim()) { toast("Give the unit a name", "bad"); return; }
+        if (isNew) state.backlog.push(draft);
+        else Object.assign(state.backlog.find(b => b.id === item.id), draft);
+        save(); dlg.close(); render();
+      } })));
+  dlg.showModal();
+}
+
+function planBacklogItem(item) {
+  const dlg = $("#genericDlg");
+  const free = monthKeys();
+  dlg.replaceChildren(
+    el("div", { class: "dlg-head" }, el("h3", { text: "Plan “" + item.unit + "” into a month" })),
+    el("div", { class: "dlg-body", style: "max-width:520px" },
+      el("p", { class: "hint", style: "margin-top:0" }, "Months already carrying a unit are marked."),
+      el("div", { class: "board", style: "grid-template-columns:repeat(auto-fill,minmax(140px,1fr))" },
+        ...free.map(k => {
+          const m = state.months[k];
+          return el("button", { class: "btn", style: "flex-direction:column;align-items:flex-start;text-align:left;padding:10px",
+            onclick: () => {
+              m.unit = item.unit; m.system = item.system; m.unitType = item.unitType;
+              if (item.notes && !m.notes) m.notes = item.notes;
+              item.state = "planned";
+              save(); dlg.close(); setView("board"); openMonth(k);
+            } },
+            el("strong", { text: monthLabel(k) }),
+            el("span", { style: "font-size:11px;color:var(--faint)", text: m.unit || "empty" }));
+        }))),
+    el("div", { class: "dlg-foot" }, el("span", { class: "spacer" }),
+      el("button", { class: "btn ghost", text: "Cancel", onclick: () => dlg.close() })));
+  dlg.showModal();
+}
+
+/* ==========================================================================
+   Backup: export / import / wipe
+   ========================================================================== */
+const blobToDataUrl = blob => new Promise((res, rej) => {
+  const fr = new FileReader();
+  fr.onload = () => res(fr.result);
+  fr.onerror = () => rej(fr.error);
+  fr.readAsDataURL(blob);
+});
+function dataUrlToBlob(url) {
+  const comma = url.indexOf(",");
+  const mime = (/:(.*?);/.exec(url.slice(0, comma)) || [, "application/octet-stream"])[1];
+  const bin = atob(url.slice(comma + 1));
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+async function exportBackup() {
+  const btn = $("#btnExport");
+  btn.disabled = true; btn.textContent = "Packing…";
+  try {
+    const { monthKeys, ...doc } = state;
+    const blobs = {};
+    for (const p of state.photos) {
+      for (const name of [p.file, p.thumb]) {
+        const b = await store.getBlob(name);
+        if (b) blobs[name] = await blobToDataUrl(b);
+      }
+    }
+    const payload = { app: "hobby-progress-challenge", version: 1,
+                      exportedAt: new Date().toISOString(), doc, blobs };
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }),
+                 "hpc-backup-" + stamp + ".hpcbackup.json");
+    toast("Backup saved to your downloads", "ok");
+  } catch (e) {
+    toast("Export failed: " + (e.message || e.name), "bad");
+  } finally {
+    btn.disabled = false; btn.textContent = "Export backup file";
+  }
+}
+
+async function importBackup(file) {
+  let payload;
+  try { payload = JSON.parse(await file.text()); }
+  catch (e) { toast("That file is not a readable backup.", "bad"); return; }
+  if (!payload || payload.app !== "hobby-progress-challenge" || !payload.doc) {
+    toast("That file is not a Hobby Progress Challenge backup.", "bad"); return;
+  }
+  const count = (payload.doc.photos || []).length;
+  const ok = await confirmDialog("Replace everything with this backup?",
+    "Taken " + new Date(payload.exportedAt).toLocaleString() + ".\n" +
+    "It holds " + Object.keys(payload.doc.months || {}).length + " months and " + count + " photos.\n\n" +
+    "Your current plan and photos will be erased first.", "Import", true);
+  if (!ok) return;
+
+  try {
+    await wipeAll(true);
+    for (const name in (payload.blobs || {})) await store.putBlob(name, dataUrlToBlob(payload.blobs[name]));
+    state = payload.doc;
+    state.settings = state.settings || { start: DEFAULT_START };
+    state.photos   = state.photos   || [];
+    state.backlog  = state.backlog  || [];
+    reconcileMonths();
+    await store.saveDoc(payload.doc);
+    urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
+    await warmThumbs();
+    render();
+    toast("Backup restored", "ok");
+  } catch (e) {
+    toast("Import failed: " + (e.message || e.name), "bad");
+  }
+}
+
+async function exportAllPhotos() {
+  if (!state.photos.length) { toast("No photos yet.", "bad"); return; }
+  const ok = await confirmDialog("Save " + state.photos.length + " images?",
+    "Each photo is saved to your downloads folder one after another. " +
+    "Your browser may ask permission to download multiple files.", "Save them");
+  if (!ok) return;
+  let n = 0;
+  for (const p of state.photos) {
+    const b = await store.getBlob(p.file);
+    if (!b) continue;
+    const ext = (p.file.split(".").pop() || "jpg");
+    downloadBlob(b, [p.monthKey, p.group, p.phase, String(++n).padStart(2, "0")].join("_") + "." + ext);
+    await new Promise(r => setTimeout(r, 260));
+  }
+  toast(n + " images saved", "ok");
+}
+
+async function wipeAll(quiet) {
+  for (const p of state.photos) {
+    try { await store.delBlob(p.file); await store.delBlob(p.thumb); } catch (e) { /* ignore */ }
+    dropUrl(p.file); dropUrl(p.thumb);
+  }
+  if (!quiet) {
+    state = blankState(state.settings.start);
+    reconcileMonths();
+    await store.saveDoc({ version: 1, settings: state.settings, months: state.months, photos: [], backlog: [] });
+    render();
+    toast("Everything erased", "ok");
+  }
+}
+
+/* ==========================================================================
+   Wiring
+   ========================================================================== */
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-view]");
+  if (b) setView(b.dataset.view);
+});
+$("#jumpNow").addEventListener("click", () => {
+  const key = monthKeys().find(isCurrentMonth);
+  if (key) openMonth(key);
+  else toast("Today is outside the challenge window (" +
+             monthLabel(monthKeys()[0]) + " – " + monthLabel(monthKeys()[11]) + ").");
+});
+$("#addBacklog").addEventListener("click", () => editBacklogItem(null));
+$("#backlogFilter").addEventListener("input", renderBacklog);
+$("#btnExport").addEventListener("click", exportBackup);
+$("#btnImport").addEventListener("click", () => {
+  const picker = $("#backupPicker");
+  picker.value = "";
+  picker.onchange = () => { if (picker.files[0]) importBackup(picker.files[0]); };
+  picker.click();
+});
+$("#btnExportPhotos").addEventListener("click", exportAllPhotos);
+$("#btnWipe").addEventListener("click", async () => {
+  if (await confirmDialog("Erase everything?",
+      "Every month, note, backlog entry and photo will be deleted. This cannot be undone.\n\n" +
+      "Export a backup first if you are not certain.", "Erase it all", true)) {
+    await wipeAll(false);
+  }
+});
+$("#btnSaveWindow").addEventListener("click", () => {
+  const v = $("#startMonth").value.trim();
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(v)) { toast("Use the form 2026-10", "bad"); return; }
+  state.settings.start = v;
+  reconcileMonths(); save(); render();
+  toast("Challenge window set to " + monthLabel(monthKeys()[0]) + " – " + monthLabel(monthKeys()[11]), "ok");
+});
+$("#storageBadge").addEventListener("click", () => setView("data"));
+
+/* ==========================================================================
+   Boot
+   ========================================================================== */
+(async function boot() {
+  await initStorage();
+
+  let doc = null;
+  try { doc = await store.loadDoc(); } catch (e) { /* start fresh */ }
+  state = doc && doc.months ? doc : blankState();
+  state.settings = state.settings || { start: DEFAULT_START };
+  state.photos   = state.photos   || [];
+  state.backlog  = state.backlog  || [];
+  reconcileMonths();
+
+  /* Drop photo records whose image files went missing, so the UI never lies.
+     Photos are real files in server mode, so someone may have tidied the
+     folder by hand: keep any photo whose full-size file still exists, and
+     let it stand in for its own preview if only the thumbnail was removed. */
+  if (store.listBlobs) {
+    const names = await store.listBlobs().catch(() => null);
+    if (names) {
+      const have = new Set(names);
+      state.photos = state.photos.filter(p => have.has(p.file));
+      for (const p of state.photos) if (!have.has(p.thumb)) p.thumb = p.file;
+    }
+  } else {
+    const alive = [];
+    for (const p of state.photos) {
+      const ok = await store.getBlob(p.thumb).then(b => !!b).catch(() => false);
+      if (ok) alive.push(p);
+    }
+    if (alive.length !== state.photos.length) state.photos = alive;
+  }
+
+  await warmThumbs();
+  paintBadge();
+  $("#btnOpenFolder").addEventListener("click", () =>
+    store.openFolder().catch(e => toast("Could not open the folder: " + e.message, "bad")));
+
+  // Opened without the launcher: say so plainly, because nothing is landing in the folder.
+  if (store.kind !== "server") {
+    const n = $("#storageNotice");
+    n.replaceChildren(
+      el("strong", { text: "Not saving to the tracker folder. " }),
+      "This page was opened directly, so your work is going into " +
+      (store.kind === "idb" ? "the browser's own storage" : store.kind === "fsa" ? "the folder you picked" : "memory only") +
+      ". Close this tab and double-click ", el("code", { text: "Start Tracker.cmd" }),
+      " instead to save plans and photos next to the app. " +
+      "Anything already entered here can be carried over with Data → Export, then Import.");
+    n.hidden = false;
+  }
+
+  render();
+
+  if (store.kind === "mem") {
+    toast("Nothing can be saved in this browser — export a backup before closing.", "bad");
+  }
+  if (!doc && store.kind !== "mem") {
+    toast("Ready. Click " + monthLabel(monthKeys()[0]) + " to plan your first unit.", "ok");
+  }
+})();
+</script>
+</body>
+</html>
