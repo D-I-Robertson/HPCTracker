@@ -30,6 +30,9 @@ entirely on your own computer: no account, no cloud service, and nothing sent an
 
 - **Year Board.** All twelve challenge months at a glance. Each shows the planned unit, its bonus
   category, before/after thumbnails, status, and what's due next.
+- **Multiple years.** Use **Add year** to set up next year's challenge with its own start and end
+  month. Each year has its own board, stats and six bonuses, and you can switch back to earlier
+  years at any time.
 - **Deadline tracking.** Counts down to the two monthly deadlines in Pacific time, as the organisers
   set them. Months turn magenta as a deadline approaches and pink once it has passed.
 - **Bonus rules enforced.** One bonus per month, each category only once, six at most. Categories
@@ -101,6 +104,15 @@ Your home screen. Every month is a card; click one to open it. The current month
 blue. The coloured stripe along the top of each card is decoration: it steps through the palette
 from October to September.
 
+### Years
+The year picker in the top bar switches the board, bonuses and stats between your challenge years.
+**Add year** asks for a **start month** and an **end month** (it suggests the twelve months straight
+after your latest year) and then opens the new year. Years can't overlap, and one year can cover at
+most 24 months. The backlog is shared by every year.
+
+Under *Data → Challenge years* you can change the dates of the year you're viewing or remove it.
+Removing a year deletes its months and photos, after asking you to confirm.
+
 ### A month
 - **The plan:** unit name, game system or army, unit type, and status (*Planned*, *In progress*,
   *Complete*, *Missed*, *Skipped*).
@@ -125,7 +137,7 @@ Your entries toward the maximum of 18, months completed, streak, photo count, an
 month-by-month table.
 
 ### Data
-Where your data is stored, backup and restore, the challenge dates setting, and **Erase all data**.
+Where your data is stored, backup and restore, your challenge years, and **Erase all data**.
 
 ## The challenge rules it follows
 
@@ -238,9 +250,12 @@ Your data lives in `data.json` and `photos/`, separate from the app. To update:
    versions, or run `git pull` if you cloned it.
 3. Start it again.
 
-**For a future year's challenge:** if only the dates move, change the first month under
-*Data → Challenge window*. If the rules change, the bonus categories and constants live at the top of
-the script in `hobby-progress-challenge.html`.
+**For a future year's challenge:** click **Add year** and pick its start and end months. Your
+earlier years stay available from the year picker. If the rules change, the bonus categories and
+constants live at the top of the script in `hobby-progress-challenge.html`.
+
+Data saved by an older version of the tracker, including `.hpcbackup.json` files, is upgraded
+automatically when it's opened or imported: the single challenge window becomes your first year.
 
 ---
 
@@ -288,9 +303,14 @@ Only reachable from `127.0.0.1`.
 
 ```jsonc
 {
-  "version": 1,
-  "settings": { "start": "2026-10" },          // first month of the 12-month window
-  "months": {
+  "version": 2,
+  "settings": {
+    "years": [                                 // sorted by start; never overlapping
+      { "id": "…", "start": "2026-10", "end": "2027-09" }
+    ],
+    "activeYear": "…"                          // id of the year being viewed
+  },
+  "months": {                                  // one entry per calendar month, across all years
     "2026-10": {
       "unit": "", "system": "", "unitType": "",
       "status": "planned",                     // planned | started | complete | missed | skipped
